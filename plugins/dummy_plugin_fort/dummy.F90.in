@@ -1,0 +1,63 @@
+! (C) Copyright 2023- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+!
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+module user_plugin_module__@PLUGIN_NAME@
+
+use fckit_log_module, only : log => fckit_log
+use fckit_configuration_module, only : fckit_configuration
+use plume_data_module, only : plume_data
+use plume_module, only : plume_check
+
+implicit none
+private
+
+! User-defined plugin methods
+public :: plugincore_setup__@PLUGIN_NAME@
+public :: plugincore_run__@PLUGIN_NAME@
+public :: plugincore_teardown__@PLUGIN_NAME@
+
+contains
+
+
+! =======================================================================
+subroutine plugincore_setup__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    call log%info("DUMMY PLUGINCORE_SETUP is printing data")    
+    call plume_check(model_data%print())
+end subroutine
+
+
+subroutine plugincore_run__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    logical :: found
+    real :: val
+    character(len=10) :: val_str    
+
+    ! print configuration param
+    found = config%get("dummy-param-1",val)
+    write(val_str,'(F10.3)')val
+    call log%info("DUMMY PLUGINCORE_RUN, dummy-param-1: "//val_str)
+
+    ! print data
+    call log%info("DUMMY PLUGINCORE_RUN is printing data")
+    call plume_check(model_data%print())
+end subroutine
+
+
+subroutine plugincore_teardown__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    call log%info("DUMMY PLUGINCORE_TEARDOWN is printing data")
+    call plume_check(model_data%print())
+end subroutine
+! =======================================================================
+
+end module

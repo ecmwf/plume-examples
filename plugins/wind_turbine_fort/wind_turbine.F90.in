@@ -1,0 +1,242 @@
+! (C) Copyright 2023- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+!
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+module user_plugin_module__@PLUGIN_NAME@
+
+use iso_c_binding
+
+use fckit_mpi_module
+use fckit_configuration_module, only : fckit_configuration
+use atlas_module, only : atlas_field, atlas_metadata, atlas_functionspace_StructuredColumns
+
+use plume_data_module, only : plume_data
+use plume_module, only : plume_check
+
+implicit none
+private
+
+! wind turbine structure (contains wt information)
+type wind_turbine_info
+
+    ! Horns-Rev coords
+    real(c_double) :: lat
+    real(c_double) :: lon
+
+    ! WT geometry
+    real(c_double) :: hubHeight
+    real(c_double) :: radius
+    real(c_double) :: Cp
+    real(c_double) :: cutoffMax
+    real(c_double) :: cutoffMin
+
+    ! env
+    real(c_double) :: rho_hub
+
+  contains
+end type
+
+! private module variables
+type(wind_turbine_info) :: wind_turbine_model
+
+! atlas fields
+type(atlas_Field) :: u_field
+type(atlas_Field) :: v_field
+
+! others
+integer(c_int) :: nelev
+integer        :: size
+integer        :: rank
+integer        :: nearest_idx_local
+real(c_double) :: min_dist_local
+integer        :: rank_global_min
+
+
+! User-defined plugin methods
+public :: plugincore_setup__@PLUGIN_NAME@
+public :: plugincore_run__@PLUGIN_NAME@
+public :: plugincore_teardown__@PLUGIN_NAME@
+
+contains
+
+
+subroutine configure_wind_turbine(config)
+    type(fckit_configuration) :: config
+        
+    real :: lat
+    real :: lon
+    real :: hubHeight
+    real :: radius
+    real :: Cp
+    real :: cutoffMax
+    real :: cutoffMin
+    real :: rho_hub
+
+    logical :: found
+
+    found = config%get("lat", lat)
+    found = config%get("lon", lon)
+    found = config%get("hub_height", hubHeight)
+    found = config%get("radius", radius)
+    found = config%get("power_coeff", Cp)
+    found = config%get("cutoff_max", cutoffMax)
+    found = config%get("cutoff_min", cutoffMin)
+    found = config%get("rho_hub", rho_hub)
+
+    wind_turbine_model%lat = lat
+    wind_turbine_model%lon = lon
+    wind_turbine_model%hubHeight = hubHeight
+    wind_turbine_model%radius = radius
+    wind_turbine_model%Cp = Cp
+    wind_turbine_model%cutoffMax = cutoffMax
+    wind_turbine_model%cutoffMin = cutoffMin
+    wind_turbine_model%rho_hub = rho_hub
+
+end subroutine
+
+
+subroutine nearest_gp(fs)
+    type(atlas_functionspace_StructuredColumns), intent(in) :: fs
+    type(atlas_field):: lon_lat_field
+    real(c_double), pointer :: lon_lat(:,:)
+    real(c_double) :: gp_lat
+    real(c_double) :: gp_lon
+    real(c_double) :: min_dist2
+    real(c_double) :: dist2
+    integer :: i_gp
+    integer :: i_gp_min
+
+    lon_lat_field = fs%xy()
+
+    call lon_lat_field%data(lon_lat)
+
+    min_dist2 = 1e12
+    do i_gp=1,fs%size()
+        gp_lon = lon_lat(1, i_gp)
+        gp_lat = lon_lat(2, i_gp)
+        dist2 = (wind_turbine_model%lat-gp_lat)**2 + (wind_turbine_model%lon-gp_lon)**2
+
+        if (dist2 .lt. min_dist2) then
+            i_gp_min = i_gp
+            min_dist2 = dist2
+        end if
+
+    end do
+
+    nearest_idx_local = i_gp_min
+    min_dist_local = sqrt(min_dist2)
+
+end subroutine
+
+! power output of the WT
+function calc_power(v_hub_ms) result(power_output)
+
+    real(c_double) :: v_hub_ms
+    real(c_double) :: power_output
+    real(c_double), parameter :: PI = DACOS(-1.D0)
+    
+    if (v_hub_ms < wind_turbine_model%cutoffMin) then  ! min cutoff speed
+        power_output = 0.0;
+    else if (v_hub_ms > wind_turbine_model%cutoffMax) then  ! max cutoff speed
+        power_output = 0.0;
+    else
+        power_output = 0.5 * wind_turbine_model%rho_hub * v_hub_ms**3 &
+        * (3.14159 * wind_turbine_model%radius**2) * wind_turbine_model%Cp
+    endif
+
+end function
+! =======================================================================
+
+
+
+! =======================================================================
+recursive subroutine plugincore_setup__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    type(atlas_functionspace_StructuredColumns) :: fs_col
+    type(fckit_mpi_comm) :: comm
+
+    real(c_double), allocatable :: min_dist_all(:)
+
+    ! get parameters from configuration
+    call configure_wind_turbine(config)
+
+    call plume_check(model_data%get_shared_atlas_field("U100", u_field) );
+    call plume_check(model_data%get_shared_atlas_field("V100", v_field) );
+
+    fs_col = u_field%functionspace()
+
+    call nearest_gp(fs_col)    
+
+    ! Now we need to find the (global) nearest
+    comm = fckit_mpi_comm()    
+    rank = comm%rank()
+    size = comm%size()
+
+    allocate( min_dist_all( size ) )
+    call comm%allgather(min_dist_local, min_dist_all)
+
+    rank_global_min = MINLOC(min_dist_all, 1)
+
+    if (rank+1 == rank_global_min) then
+        write(*,*) "FROM FORTRAN) (", rank+1, "/", size, ") =>", &
+                "  nearest_idx_local: ", nearest_idx_local, &
+                ", min_dist_local: ", min_dist_local, &
+                ", rank_global_min: ", rank_global_min, &
+                ", min_dist_global: ", min_dist_all(rank_global_min)
+    endif
+
+    deallocate(min_dist_all)
+
+end subroutine
+
+
+subroutine plugincore_run__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+
+    real(c_double) :: hub_ms_mod
+    real(c_double) :: u_hub_ms
+    real(c_double) :: v_hub_ms
+    real(c_double) :: wt_p_watts
+
+    real(c_double), pointer :: u_array(:,:,:)
+    real(c_double), pointer :: v_array(:,:,:)
+
+    ! only the rank with global min distance will do the calculation..
+    if (rank+1 == rank_global_min) then
+
+        ! horizontal vel components
+        call u_field%data(u_array)
+        call v_field%data(v_array)
+
+        ! reversed order of indexes with respect to C
+        u_hub_ms = u_array(1, 1, nearest_idx_local);
+        v_hub_ms = v_array(1, 1, nearest_idx_local);
+
+        ! vel module at hub (approximated!)
+        hub_ms_mod = sqrt(u_hub_ms**2 + v_hub_ms**2);
+
+        ! calc power output
+        wt_p_watts = calc_power(hub_ms_mod);
+
+        write(*,*) "(",rank,"/",size,") U_hub = ",hub_ms_mod,", P_wt = ",wt_p_watts
+    endif
+
+
+end subroutine
+
+
+subroutine plugincore_teardown__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    call plume_check(model_data%print())
+end subroutine
+! =======================================================================
+
+end module

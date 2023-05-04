@@ -1,0 +1,44 @@
+# 
+#  (C) Copyright 2023- ECMWF.
+# 
+#  This software is licensed under the terms of the Apache Licence Version 2.0
+#  which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# 
+#  In applying this licence, ECMWF does not waive the privileges and immunities
+#  granted to it by virtue of its status as an intergovernmental organisation nor
+#  does it submit to any jurisdiction.
+# 
+#!/bin/bash
+
+exe_dir=@CMAKE_BINARY_DIR@/bin
+plume_config=@DATA_PATH@/plume-config.json
+   
+
+if [ "$#" != 1 ]; then
+    echo "Invalid command!"
+    echo "Run this script as:"
+    echo "  > run_nwp_emulator.sh [cpp,fortran]"
+    exit 1
+fi
+
+if [ "$1" != "cpp" ] && [ "$1" != "fortran" ]; then
+    echo "Command line arguments not recognised"
+    echo "Run this script as:"
+    echo "  > run_nwp_emulator.sh [cpp,fortran]"
+    exit 1
+fi
+
+echo "Selected Emulator type: $1"
+
+# C++ emulator
+if [ "$1" == "cpp" ]; then
+    echo "Running C++ NWP emulator"
+    mpirun -np 2 $exe_dir/nwp_emulator.x $plume_config
+fi
+
+# Fortran emulator
+if [ "$1" == "fortran" ]; then
+    echo "Running Fortran NWP emulator"
+    mpirun -np 2 $exe_dir/nwp_emulator_fort.x $plume_config
+fi
+

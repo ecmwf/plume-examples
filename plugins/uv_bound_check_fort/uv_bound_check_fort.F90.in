@@ -1,0 +1,108 @@
+! (C) Copyright 2023- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+!
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+module user_plugin_module__@PLUGIN_NAME@
+
+use iso_c_binding, only : c_bool, c_double
+use fckit_log_module, only : log => fckit_log
+use fckit_configuration_module, only : fckit_configuration
+use atlas_module, only : atlas_field, atlas_functionspace_StructuredColumns
+
+use plume_data_module, only : plume_data
+use plume_module, only : plume_check
+
+implicit none
+private
+
+! User-defined plugin methods
+public :: plugincore_setup__@PLUGIN_NAME@
+public :: plugincore_run__@PLUGIN_NAME@
+public :: plugincore_teardown__@PLUGIN_NAME@
+
+! atlas fields
+type(atlas_Field) :: U100_field
+type(atlas_Field) :: V100_field
+
+! range bounds
+real :: lower_bound
+real :: upper_bound
+
+contains
+
+! check if all values in the field are in range
+function in_range(field, lbound, ubound)
+    type(atlas_Field) :: field
+    type(atlas_functionspace_StructuredColumns) :: fs
+    real :: lbound
+    real :: ubound
+    logical :: in_range
+    real(c_double), pointer :: field_view(:,:,:)
+
+    integer :: i_pt
+    real :: val
+
+    ! view of the field data
+    call field%data(field_view)
+
+    fs = field%functionspace()
+
+    in_range = .true.
+    do i_pt=1,fs%size()
+        val = field_view(1, 1, i_pt)
+        if ((val < lower_bound) .or. (val > upper_bound) ) then
+            in_range = .false.
+            return
+        endif
+    enddo
+
+end function
+
+
+! =======================================================================
+subroutine plugincore_setup__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    logical :: found
+
+    ! call log%info("DUMMY PLUGINCORE_SETUP is printing data")
+
+    found = config%get("lower_bound", lower_bound)
+    found = config%get("upper_bound", upper_bound)
+    
+    call plume_check(model_data%get_shared_atlas_field("U100", U100_field) );
+    call plume_check(model_data%get_shared_atlas_field("V100", V100_field) );
+
+end subroutine
+
+
+subroutine plugincore_run__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+
+    ! Check U100 bounds
+    if ( in_range(U100_field, lower_bound, upper_bound) .eqv. .false.) then
+        call log%warning("Fortran bound-check) U100 values not in range!")
+    endif
+
+    ! Check V100 bounds
+    if ( in_range(V100_field, lower_bound, upper_bound) .eqv. .false.) then
+        call log%warning("Fortran bound-check) V100 values not in range!")
+    endif    
+    
+end subroutine
+
+
+subroutine plugincore_teardown__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    call log%info("Plugin bound-check finilised.")
+end subroutine
+! =======================================================================
+
+end module

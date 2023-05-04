@@ -1,0 +1,179 @@
+! (C) Copyright 2023- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+!
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+module user_plugin_module__@PLUGIN_NAME@
+
+use iso_c_binding, only : c_double, c_int
+
+use fckit_configuration_module, only : fckit_configuration
+use plume_data_module, only : plume_data
+use plume_module, only : plume_check
+
+use atlas_module, only : atlas_field, &
+                         atlas_metadata, &
+                         atlas_grid, &
+                         atlas_Functionspace, &
+                         atlas_functionspace_StructuredColumns, &
+                         atlas_LonLatRectangularDomain, &
+                         atlas_RegionalGrid, &
+                         atlas_StructuredGrid, &
+                         atlas_Config, &
+                         atlas_MeshGenerator, &
+                         atlas_Mesh, &
+                         atlas_functionspace_NodeColumns, &
+                         atlas_Interpolation, &
+                         atlas_Output, &
+                         atlas_Output_gmsh, &
+                         atlas_real, &
+                         atlas_Partitioner, &
+                         atlas_MatchingPartitioner, &
+                         atlas_GridDistribution
+
+
+implicit none
+private
+
+! User-defined plugin methods
+public :: plugincore_setup__@PLUGIN_NAME@
+public :: plugincore_run__@PLUGIN_NAME@
+public :: plugincore_teardown__@PLUGIN_NAME@
+
+! atlas fields
+type(atlas_Field) :: u_field
+type(atlas_Field) :: v_field
+
+
+contains
+
+
+! =======================================================================
+subroutine plugincore_setup__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    call plume_check(model_data%get_shared_atlas_field("U", u_field) );
+    call plume_check(model_data%get_shared_atlas_field("V", v_field) );
+    call plume_check(model_data%print())
+end subroutine
+
+
+subroutine plugincore_run__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+
+    type(atlas_functionspace_StructuredColumns) :: input_fs
+    class(atlas_Functionspace), allocatable :: input_fs_parent
+    type(atlas_grid) :: input_grid
+    type(atlas_Config) :: grid_config
+
+    type(atlas_Config) :: domain_config
+    type(atlas_LonLatRectangularDomain) :: domain
+    type(atlas_StructuredGrid) :: area_grid
+
+    type(atlas_GridDistribution) :: distrubution
+    type(atlas_Partitioner) :: partitioner
+
+    type(atlas_MeshGenerator) :: meshgenerator
+    type(atlas_Mesh) :: mesh_trg
+    type(atlas_functionspace_NodeColumns) :: output_func_space
+
+    ! interpolation
+    type(atlas_Config) :: interpolation_config
+    type(atlas_Interpolation) :: interpolation
+
+    ! target field
+    type(atlas_Field) :: field_target
+
+    type( atlas_Output ) :: gmsh
+
+    integer :: levels
+
+    real :: zlatn
+    real :: zlats
+    real :: zlone
+    real :: zlonw
+
+    logical :: found
+
+    ! read parameters from plugin-core configuration
+    found = config%get("bounding_box_north_deg", zlatn)
+    found = config%get("bounding_box_south_deg", zlats)
+    found = config%get("bounding_box_east_deg", zlone)
+    found = config%get("bounding_box_west_deg", zlonw)
+
+    ! field function space
+    input_fs = u_field%functionspace()
+    input_grid = input_fs%grid()
+    levels = input_fs%levels()
+
+    ! lat/lon domain definition
+    domain_config = atlas_Config()
+    call domain_config%set("type", "rectangular")
+    call domain_config%set("xmin", zlonw)
+    call domain_config%set("xmax", zlone)
+    call domain_config%set("ymin", zlats)
+    call domain_config%set("ymax", zlatn)
+    call domain_config%set("units", "degrees")
+
+    grid_config = input_grid%spec()
+    call grid_config%set("domain", domain_config)
+
+    ! area grid defined as the input grid, but cut by the latlon domain
+    allocate(input_fs_parent, source=input_fs)
+    partitioner = atlas_MatchingPartitioner(input_fs_parent)    
+
+    area_grid = atlas_StructuredGrid( grid_config )
+    
+    distrubution = atlas_GridDistribution(area_grid, partitioner)
+    
+    meshgenerator = atlas_MeshGenerator("structured")
+    mesh_trg = meshgenerator%generate(area_grid, distrubution)
+    output_func_space = atlas_functionspace_NodeColumns(mesh_trg)    
+
+    ! setup interpolation
+    interpolation_config = atlas_Config()
+    call interpolation_config%set("type", "structured-linear2D")
+    interpolation = atlas_Interpolation(interpolation_config, input_fs, output_func_space)
+
+    ! define target field
+    field_target = output_func_space%create_field(name="target", kind=atlas_real(c_double), levels=levels, variables=1)
+
+    ! execute interpolation
+    call interpolation%execute(u_field, field_target);
+
+    ! write out to gmsh..
+    gmsh = atlas_Output_gmsh("interpolated_fort.msh")
+    call gmsh%write(mesh_trg)
+    call gmsh%write(field_target)
+
+    ! finalise
+    call gmsh%final()
+    call field_target%final()
+    call interpolation%final()
+    call interpolation_config%final()
+
+    call output_func_space%final()
+    call mesh_trg%final()
+    call meshgenerator%final()
+    call area_grid%final()
+    call grid_config%final()
+    call domain_config%final()
+
+    deallocate(input_fs_parent)
+    
+end subroutine
+
+
+subroutine plugincore_teardown__@PLUGIN_NAME@(config, model_data)
+    type(fckit_configuration) :: config
+    type(plume_data) :: model_data
+    call plume_check(model_data%print())
+end subroutine
+! =======================================================================
+
+end module
