@@ -20,7 +20,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ecbuild_find_package( NAME eckit  VERSION  1.18 REQUIRED )
 ecbuild_find_package( NAME atlas )
-ecbuild_find_package( NAME infero )
 ecbuild_find_package( NAME plume REQUIRED )
 
 ## Plugins
