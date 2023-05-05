@@ -1,5 +1,5 @@
 # Plume-examples
-plume-examples repository contains example plugins for the Plume plugin system. Data interface is provided by Atlas.
+plume-examples are example plugins for the Plume plugin system. Data interface is provided by Atlas.
  - Plume: https://github.com/ecmwf/plume
  - Atlas: https://github.com/ecmwf/atlas
 
@@ -20,7 +20,7 @@ plume-examples demonstrate how to use plume API (both C++ and Fortran) for vario
 ### NWP Emulator
 This repository also contains an emulator of a NWP (Numerical Weather Prediction) model that demonstrates how to use Plume API on the model side. The NWP emulator is available in both C++ and Fortran.
 
-### Requirements
+## Requirements
 Build dependencies:
 
 - C/C++ compiler (C++17)
@@ -34,7 +34,7 @@ Runtime dependencies:
   - Atlas >= 0.31.1 (https://github.com/ecmwf/atlas)
   - Plume >=  0.0.1 (https://github.com/ecmwf/plume)
 
-### Installation
+## Installation
 Plume-examples employs an out-of-source build/install based on CMake.
 Make sure ecbuild is installed and the ecbuild executable script is found ( `which ecbuild` ).
 Now proceed with installation as follows:
@@ -61,7 +61,7 @@ make -j10
 make install
 ```
 
-### Run the example plugins
+## Run the example plugins
 To run the C++ NWP emulator + plugins:
 ```bash
 cd $builddir
