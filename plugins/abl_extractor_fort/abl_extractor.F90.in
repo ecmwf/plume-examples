@@ -16,12 +16,10 @@ use plume_data_module, only : plume_data
 use plume_module, only : plume_check
 
 use atlas_module, only : atlas_field, &
-                         atlas_metadata, &
                          atlas_grid, &
                          atlas_Functionspace, &
                          atlas_functionspace_StructuredColumns, &
                          atlas_LonLatRectangularDomain, &
-                         atlas_RegionalGrid, &
                          atlas_StructuredGrid, &
                          atlas_Config, &
                          atlas_MeshGenerator, &
@@ -124,7 +122,9 @@ subroutine plugincore_run__@PLUGIN_NAME@(config, model_data)
     call grid_config%set("domain", domain_config)
 
     ! area grid defined as the input grid, but cut by the latlon domain
-    allocate(input_fs_parent, source=input_fs)
+    allocate(input_fs_parent)
+    input_fs_parent=input_fs
+
     partitioner = atlas_MatchingPartitioner(input_fs_parent)    
 
     area_grid = atlas_StructuredGrid( grid_config )
