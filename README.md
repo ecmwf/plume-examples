@@ -2,7 +2,9 @@
 :warning: This software is still under heavy development and not 
 yet ready for operational use
 
-plume-plugins is a collection of example plugins for the plume plugin system (https://github.com/ecmwf/plume).
+plume-plugins is a collection of example plugins for the Plume plugin system. Data interface is provided by Atlas.
+ - Plume: https://github.com/ecmwf/plume
+ - Atlas: https://github.com/ecmwf/atlas
 
 ## Description
 plume-plugins demonstrate how to use plume API (both C++ and Fortran) for various types of plugins, including point time-series extraction (for a wind turbine model) and a simplified anomaly detection algorithm.
@@ -18,5 +20,5 @@ plume-plugins demonstrate how to use plume API (both C++ and Fortran) for variou
 
  - **wind_turbine**: A plugins that implements a simple wind turbine model (using U100 field as input)
 
- ### NWP Emulator
+### NWP Emulator
 This repository also contains an NWP (Numerical Weather Prediction) model "emulator" that demonstrates how to use Plume API on the model side. The NWP emulator is available in both C++ and Fortran.
