@@ -21,14 +21,13 @@ use atlas_module, only: atlas_GridDistribution, &
                         atlas_config, &
                         atlas_field, &
                         atlas_library, &
-                        atlas_reducedgaussiangrid, &
-                        atlas_fs_strcol => atlas_functionspace_StructuredColumns
+                        atlas_reducedgaussiangrid
 
 public :: field_generator
 
 ! A helper class for creating Atlas Fields used by the NWP emulator 
 type field_generator
-    type(atlas_fs_strcol) :: fs  ! function space    
+    type(atlas_functionspace_StructuredColumns) :: fs  ! function space    
     integer :: grid_size_x = 32  ! grid size X
     integer :: grid_size_y = 64  ! grid size Y
     integer :: n_halo = 3        ! N halo points
