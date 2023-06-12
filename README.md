@@ -3,6 +3,11 @@ plume-examples are example plugins for the Plume plugin system. Data interface i
  - Plume: https://github.com/ecmwf/plume
  - Atlas: https://github.com/ecmwf/atlas
 
+**DISCLAIMER**
+This project is **BETA** and will be **Experimental** for the foreseeable future.
+Interfaces and functionality are likely to change, and the project itself may be scrapped.
+**DO NOT** use this software in any project/software that is operational.
+
 ## Description
 plume-examples demonstrate how to use plume API (both C++ and Fortran) for various types of plugins, including point time-series extraction (for a wind turbine model) and a simplified anomaly detection algorithm.
 
