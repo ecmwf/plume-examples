@@ -45,7 +45,7 @@ void PluginCoreUVBoundCheck::run() {
 
 
 bool PluginCoreUVBoundCheck::inRange(const atlas::Field& field) const {
-    atlas::array::ArrayView<double,3> arr = atlas::array::make_view<double,3>( field );
+    atlas::array::ArrayView<const double,3> arr = atlas::array::make_view<const double,3>( field );
     bool res = true;
     for (int idx = 0; idx < arr.size(); idx++) {
         auto v = *(arr.data() + idx);
