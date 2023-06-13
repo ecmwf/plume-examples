@@ -11,26 +11,30 @@
 
 # NWP_emulators
 
-## C++
-ecbuild_add_executable( TARGET nwp_emulator.x
-  SOURCES     
+ecbuild_add_library( TARGET nwp_utils
+  SOURCES
     nwp_utils.h
     nwp_utils.cc
+  PUBLIC_LIBS
+    atlas
+)
+
+## C++
+ecbuild_add_executable( TARGET nwp_emulator.x
+  SOURCES
     nwp_emulator.cc
   LIBS
-    atlas
+    nwp_utils
     plume_plugin_manager
 )
 
 ## Fortran
 ecbuild_add_executable( TARGET nwp_emulator_fort.x
-  SOURCES     
-    nwp_utils.h
-    nwp_utils.cc
+  SOURCES
     nwp_utils.F90
     nwp_emulator.F90
   LIBS
-    atlas
+    nwp_utils
     plume_f
 )
 
