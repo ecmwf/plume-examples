@@ -67,6 +67,7 @@ public:
 
     plume::Protocol negotiate() override {
         plume::Protocol protocol;
+        // protocol.requireAtlasVersion("0.32.0");
         protocol.requireAtlasField("U");
         protocol.requireAtlasField("V");
         return protocol;
