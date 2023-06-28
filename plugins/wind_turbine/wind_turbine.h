@@ -27,52 +27,54 @@ namespace wind_turbine_plugin {
 
 
 // Class containing the Wind Turbine information
-class WindTurbineInfo {
+class WindTurbine {
 
 public:
-    WindTurbineInfo(const eckit::Configuration& conf) :  
 
-        // Horns-Rev coords
-        lat_{ conf.getDouble("lat") },
-        lon_{ conf.getDouble("lon") },
+    WindTurbine(const eckit::Configuration& conf);
 
-        // wind turbine params
-        hubHeight_{ conf.getDouble("hub_height") },
-        radius_{ conf.getDouble("radius") },
-        Cp_{ conf.getDouble("power_coeff") },
-        cutoffMax_{ conf.getDouble("cutoff_max") },
-        cutoffMin_{ conf.getDouble("cutoff_min") },
+    ~WindTurbine();
 
-        // rho at hub height
-        rhoHub_{ conf.getDouble("rho_hub") } {}
+    void setupClosestGP(atlas::Field lonLatField);
 
-    ~WindTurbineInfo() {}
+    void calculatePower(atlas::Field fieldU, atlas::Field fieldV);
 
-    double& lat() { return lat_; }
-    double& lon() { return lon_; }
-    double& hubHeight() { return hubHeight_; }
-    double& radius() { return radius_; }
-    double& Cp() { return Cp_; }
-    double& cutoffMax() { return cutoffMax_; }
-    double& cutoffMin() { return cutoffMin_; }
-    double& rhoHub() { return rhoHub_; }
+    const double& lat() { return lat_; }
+    const double& lon() { return lon_; }
+    const double& hubHeight() { return hubHeight_; }
+    const double& radius() { return radius_; }
+    const double& Cp() { return Cp_; }
+    const double& cutoffMax() { return cutoffMax_; }
+    const double& cutoffMin() { return cutoffMin_; }
+    const double& rhoHub() { return rhoHub_; }
 
 private:
 
-    // coordinates
+    // WT ID
+    int ID_;
+
+    // WT coordinates
     double lat_;
     double lon_;
 
-    // wind turbine parameters
+    // Wind turbine parameters
     double hubHeight_;
     double radius_;
     double Cp_;
     double cutoffMax_;
     double cutoffMin_;
 
-    // atmospheric params
+    // Atmospheric params
     double rhoHub_;
+
+    // Nearest Grid Point info
+    int nearestPointID_;
+    double minDistanceLocal_;
+    size_t minRankGlob_;
+
 };
+
+
 
 class WindTurbinePluginCore : public plume::PluginCore {
 
@@ -92,29 +94,14 @@ public:
     constexpr static const char* type() { return "WindTurbine"; }
 
 private:
-    // Local nearest grid point to the wind turbine
-    void nearestPoint(atlas::Field lonLatField);
 
-    // Power output of the wind turbine
-    double calcPower(double hubUmag_ms);
+    // Wind turbines
+    std::vector<WindTurbine> windTurbines_;
 
-
-private:
-    // wind turbine information
-    WindTurbineInfo windTurbine_;
-
-    // atlas fields U and V
+    // Atlas fields U and V
     atlas::Field fieldU_;
     atlas::Field fieldV_;
 
-    // nelev
-    int nelev_;
-
-    int nearestPointID_;
-    double minDistanceLocal_;
-
-    // global
-    size_t minRankGlob_;
 };
 // ------------------------------------------------------
 

@@ -1,82 +1,137 @@
 {
-"plugins": [
-    {
-        "name": "ABLextractor",
-        "lib": "abl_extractor",
-        "core-config": {
-            "bounding_box_north_deg": 45,
-            "bounding_box_south_deg": -45,
-            "bounding_box_east_deg": 140,
-            "bounding_box_west_deg": 50
+    "plugins": [
+        {
+            "name": "ABLextractor",
+            "lib": "abl_extractor",
+            "core-config": {
+                "bounding_box_north_deg": 45,
+                "bounding_box_south_deg": -45,
+                "bounding_box_east_deg": 140,
+                "bounding_box_west_deg": 50
+            }
+        },
+        {
+            "name": "ABLextractor_F",
+            "lib": "abl_extractor_fortran",
+            "core-config": {
+                "bounding_box_north_deg": 45,
+                "bounding_box_south_deg": -45,
+                "bounding_box_east_deg": 140,
+                "bounding_box_west_deg": 50
+            }
+        },
+        {
+            "name": "DummyPlugin",
+            "lib": "dummy_plugin",
+            "core-config": {
+                "dummy-param-1": 111
+            }
+        },
+        {
+            "name": "DummyPlugin_F",
+            "lib": "dummy_plugin_fortran",
+            "core-config": {
+                "dummy-param-1": 111
+            }
+        },
+        {
+            "name": "UVBoundCheckPlugin",
+            "lib": "uv_bound_check_plugin",
+            "core-config": {
+                "lower_bound": -10.0,
+                "upper_bound": 10.0
+            }
+        },
+        {
+            "name": "UVBoundCheckPluginFortran",
+            "lib": "uv_bound_check_plugin_fortran",
+            "core-config": {
+                "lower_bound": -10.0,
+                "upper_bound": 10.0
+            }
+        },    
+        {
+            "name": "WindTurbinePlugin",
+            "lib": "wind_turbine_plugin",
+            "core-config": {
+                "wind_turbines": [
+                    {
+                        "ID": 0,
+                        "lat": 55.50,
+                        "lon": 7.90,
+                        "hub_height": 70.0,
+                        "radius": 40.0,
+                        "power_coeff": 0.38,
+                        "cutoff_max": 25.0,
+                        "cutoff_min": 0.2,
+                        "rho_hub": 1.25
+                    },
+                    {
+                        "ID": 1,
+                        "lat": 55.51,
+                        "lon": 7.91,
+                        "hub_height": 70.0,
+                        "radius": 40.0,
+                        "power_coeff": 0.38,
+                        "cutoff_max": 25.0,
+                        "cutoff_min": 0.2,
+                        "rho_hub": 1.25
+                    },
+                    {
+                        "ID": 2,
+                        "lat": 55.52,
+                        "lon": 7.92,
+                        "hub_height": 70.0,
+                        "radius": 40.0,
+                        "power_coeff": 0.38,
+                        "cutoff_max": 25.0,
+                        "cutoff_min": 0.2,
+                        "rho_hub": 1.25
+                    }
+                ]
+            }
+        },
+        {
+            "name": "WindTurbinePluginFortran",
+            "lib": "wind_turbine_plugin_fort", 
+            "core-config": {
+                "wind_turbines": [
+                    {
+                        "ID": 0,
+                        "lat": 55.50,
+                        "lon": 7.90,
+                        "hub_height": 70.0,
+                        "radius": 40.0,
+                        "power_coeff": 0.38,
+                        "cutoff_max": 25.0,
+                        "cutoff_min": 0.2,
+                        "rho_hub": 1.25
+                    },
+                    {
+                        "ID": 1,
+                        "lat": 55.51,
+                        "lon": 7.91,
+                        "hub_height": 70.0,
+                        "radius": 40.0,
+                        "power_coeff": 0.38,
+                        "cutoff_max": 25.0,
+                        "cutoff_min": 0.2,
+                        "rho_hub": 1.25
+                    },
+                    {
+                        "ID": 2,
+                        "lat": 55.52,
+                        "lon": 7.92,
+                        "hub_height": 70.0,
+                        "radius": 40.0,
+                        "power_coeff": 0.38,
+                        "cutoff_max": 25.0,
+                        "cutoff_min": 0.2,
+                        "rho_hub": 1.25
+                    }
+                ]
+            }
         }
-    },
-    {
-        "name": "ABLextractor_F",
-        "lib": "abl_extractor_fortran",
-        "core-config": {
-            "bounding_box_north_deg": 45,
-            "bounding_box_south_deg": -45,
-            "bounding_box_east_deg": 140,
-            "bounding_box_west_deg": 50
-        }
-    },
-    {
-        "name": "DummyPlugin",
-        "lib": "dummy_plugin",
-        "core-config": {
-            "dummy-param-1": 111
-        }
-    },
-    {
-        "name": "DummyPlugin_F",
-        "lib": "dummy_plugin_fortran",
-        "core-config": {
-            "dummy-param-1": 111
-        }
-    },
-    {
-        "name": "UVBoundCheckPlugin",
-        "lib": "uv_bound_check_plugin",
-        "core-config": {
-            "lower_bound": -10.0,
-            "upper_bound": 10.0
-        }
-    },
-    {
-        "name": "UVBoundCheckPluginFortran",
-        "lib": "uv_bound_check_plugin_fortran",
-        "core-config": {
-            "lower_bound": -10.0,
-            "upper_bound": 10.0
-        }
-    },    
-    {
-        "name": "WindTurbinePlugin",
-        "lib": "wind_turbine_plugin",
-        "core-config": {
-            "lat": 55.529722,
-            "lon": 7.906111,
-            "hub_height": 70.0,
-            "radius": 40.0,
-            "power_coeff": 0.38,
-            "cutoff_max": 25.0,
-            "cutoff_min": 0.2,
-            "rho_hub": 1.25
-        }
-    },
-    {
-        "name": "WindTurbinePluginFortran",
-        "lib": "wind_turbine_plugin_fort", 
-        "core-config": {
-            "lat": 55.529722,
-            "lon": 7.906111,
-            "hub_height": 70.0,
-            "radius": 40.0,
-            "power_coeff": 0.38,
-            "cutoff_max": 25.0,
-            "cutoff_min": 0.2,
-            "rho_hub": 1.25
-        }
-    }
-]
+    ]
 }
+    
